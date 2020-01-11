@@ -9,24 +9,26 @@ mongoose.connect('mongodb://127.0.0.1:27017/task-manager-api', {
   useFindAndModify: false
 })
 
-// const me = new User({
-//   name: 'Josh',
-//   age: 'Mike'
-// })
-
-// me.save().then(() => {
-//   console.log(me)
-// }).catch((error) => {
-//   console.log('Error!', error)
-// })
-
-const todo = new Task({
-  description: 'Say hello moon',
-  completed: false
+const me = new User({
+  name: '    Josh    ',
+  email: `  joshuawsample@gmail.com`,
+  adminUser: true,
+  password: 'password!'
 })
 
-todo.save().then(() => {
-  console.log(todo)
+me.save().then(() => {
+  console.log(me)
 }).catch((error) => {
-  console.log(error)
+  console.log('Error!', error)
 })
+
+// const todo = new Task({
+//   description: 'Say hello moon',
+//   completed: false
+// })
+
+// todo.save().then(() => {
+//   console.log(todo)
+// }).catch((error) => {
+//   console.log(error)
+// })
