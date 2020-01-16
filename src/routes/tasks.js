@@ -29,12 +29,28 @@ router.post('/', auth, async (req, res) => {
 // @desc GET all tasks
 // @access Public
 
-router.get('/', auth, async (req, res) => {
+// GET /tasks?completed=true
+// GET /tasks?limit=10&offset=0
+router.get('', auth, async (req, res) => {
+  const match = {}
+  const options = {
+    limit: parseInt(req.query.limit),
+    skip: parseInt(req.query.offset)
+  }
+  if (req.query.completed) {
+    match.completed = req.query.completed === 'true'
+  }
   try {
     const user = req.user
-    await user.populate('tasks').execPopulate()
+    await user.populate({
+      path: 'tasks',
+      match,
+      options
+    }).populate({
+      path: 'taskCount'
+    }).execPopulate()
 
-    res.status(200).send(user.tasks)
+    res.status(200).send({ tasks: user.tasks, count: user.taskCount })
   } catch (err) {
     res.status(500).send(err)
   }
