@@ -1,5 +1,5 @@
 const express = require('express')
-
+const auth = require('../middleware/auth')
 const router = express.Router()
 const User = require('../models/User')
 // const Task = require('../models/Task')
@@ -9,15 +9,11 @@ const User = require('../models/User')
 // @access Public
 
 router.post('/', async (req, res) => {
-  const { email } = req.body;
-
   try {
-    let user = await User.findOne({ email })
-    if (user) return res.status(400).json({ errors: [{ msg: 'User already exists' }] })
-
-    user = new User(req.body)
+    const user = new User(req.body)
+    const token = await user.generateAuthToken()
     await user.save()
-    res.status(201).send(user)
+    res.status(201).send({ user, token })
   } catch (err) {
     console.error(err.message)
     res.status(400).send(err)
@@ -28,7 +24,7 @@ router.post('/', async (req, res) => {
 // @desc GET all users
 // @access Public
 
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const users = await User.find()
     res.status(200).send(users)
@@ -37,18 +33,29 @@ router.get('/', async (req, res) => {
   }
 })
 
+// @route GET /users/me
+// @desc GET current user
+// @access Private
+
+router.get('/me', auth, async (req, res) => {
+  res.send(req.user)
+})
+
 // @route PATCH /users/:id
 // @desc PATCH single user update by id
 // @access Public
 
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', auth, async (req, res) => {
   const updates = Object.keys(req.body)
   const allowedUpdates = ['name', 'email', 'password', 'age']
   const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
 
   if (!isValidOperation) return res.status(400).send({ error: 'Invalid updates!' })
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+    const user = await User.findById(req.params.id)
+    updates.forEach((update) => user[update] = req.body[update])
+    await user.save()
+
     if (!user) return res.status(404).send()
 
     res.status(200).send(user)
@@ -61,7 +68,7 @@ router.patch('/:id', async (req, res) => {
 // @desc GET single user by id
 // @access Public
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const id = req.params.id
     const user = await User.findById(id)
@@ -78,7 +85,7 @@ router.get('/:id', async (req, res) => {
 // @desc DELETE single user by id
 // @access Public
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id)
     if (!user) return res.status(404).send()
