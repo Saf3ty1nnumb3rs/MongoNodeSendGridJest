@@ -1,11 +1,9 @@
 const mongoose = require('mongoose')
 process.env["NODE_CONFIG_DIR"] = __dirname
-const config = require('config')
-const db = config.get('mongoURI')
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(db, {
+    await mongoose.connect(process.env.MONGODB_URL, {
       useUnifiedTopology: true,
       useNewUrlParser: true,
       useCreateIndex: true,

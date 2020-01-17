@@ -2,7 +2,6 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const config = require('config');
 const Task = require('./Task')
 
 
@@ -80,7 +79,7 @@ userSchema.methods.toJSON = function () {
 }
 userSchema.methods.generateAuthToken = async function () {
   const user = this
-  const token = jwt.sign({ _id: user._id.toString() }, config.get('jwtSecret'), { expiresIn: '4 days' })
+  const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET, { expiresIn: '4 days' })
 
   user.auth = user.auth.concat({ token })
   await user.save()

@@ -4,19 +4,23 @@ const multer = require('multer')
 const sharp = require('sharp')
 const router = express.Router()
 const User = require('../models/User')
+const { sendWelcomeEmail, sendCancellationEmail } = require('../mail/account')
 
 // @route POST /users
 // @desc Create a user
 // @access Public
 
 router.post('/', async (req, res) => {
+  const oldUser = await User.findOne({ email: req.body.email })
+  console.log(oldUser)
+  if (oldUser) return res.status(400).send({ error: { msg: 'Please select a unique email for login ' } })
+  const user = new User(req.body)
   try {
-    const user = new User(req.body)
-    const token = await user.generateAuthToken()
     await user.save()
+    sendWelcomeEmail(user.email, user.name)
+    const token = await user.generateAuthToken()
     res.status(201).send({ user, token })
   } catch (err) {
-    console.error(err.message)
     res.status(400).send({ err: err.msg })
   }
 })
@@ -88,6 +92,7 @@ router.delete('/me', auth, async (req, res) => {
     // const user = await User.findByIdAndDelete(req.user._id)
 
     await req.user.remove()
+    sendCancellationEmail(req.user.email, req.user.name)
     res.status(200).send(req.user)
   } catch (err) {
     res.status(500).send({ err: err.msg })

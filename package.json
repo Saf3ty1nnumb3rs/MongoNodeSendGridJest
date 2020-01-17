@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.js",
+    "dev": "env-cmd -f ./config/dev.env nodemon src/index.js",
     "start": "node src/index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sendgrid/mail": "^6.5.0",
     "bcrypt": "^3.0.7",
     "config": "^3.2.4",
     "express": "^4.17.1",
@@ -22,6 +23,7 @@
     "validator": "^12.1.0"
   },
   "devDependencies": {
+    "env-cmd": "^10.0.1",
     "nodemon": "^2.0.2"
   }
 }
