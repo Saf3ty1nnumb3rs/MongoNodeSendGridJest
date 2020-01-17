@@ -1,8 +1,9 @@
 const express = require('express')
 const auth = require('../middleware/auth')
+const multer = require('multer')
+const sharp = require('sharp')
 const router = express.Router()
 const User = require('../models/User')
-// const Task = require('../models/Task')
 
 // @route POST /users
 // @desc Create a user
@@ -16,7 +17,7 @@ router.post('/', async (req, res) => {
     res.status(201).send({ user, token })
   } catch (err) {
     console.error(err.message)
-    res.status(400).send(err)
+    res.status(400).send({ err: err.msg })
   }
 })
 
@@ -29,7 +30,7 @@ router.get('/', auth, async (req, res) => {
     const users = await User.find()
     res.status(200).send(users)
   } catch (err) {
-    res.status(500).send(err)
+    res.status(500).send({ err: err.msg })
   }
 })
 
@@ -57,7 +58,7 @@ router.patch('/me', auth, async (req, res) => {
 
     res.status(200).send(req.user)
   } catch (err) {
-    res.status(400).send(err)
+    res.status(400).send({ err: err.msg })
   }
 })
 
@@ -74,7 +75,7 @@ router.get('/:id', auth, async (req, res) => {
     }
     res.status(200).send(user)
   } catch (err) {
-    res.status(500).send(err)
+    res.status(500).send({ err: err.msg })
   }
 })
 
@@ -89,9 +90,61 @@ router.delete('/me', auth, async (req, res) => {
     await req.user.remove()
     res.status(200).send(req.user)
   } catch (err) {
-    res.status(500).send()
+    res.status(500).send({ err: err.msg })
+  }
+})
+
+// @route POST /users/me/avatar
+// @desc Create a user avatar
+// @access Private
+
+// file filter and upload through multer
+const upload = multer({
+  limits: {
+    fileSize: 1000000
+  },
+  fileFilter(req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error('Please upload an image of type jpg, jpeg, or png'))
+    }
+    cb(undefined, true)
+  }
+})
+
+router.post('/me/avatar', auth, upload.single('avatar'), async (req, res) => {
+  const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer()
+  req.user.avatar = buffer
+  await req.user.save()
+  res.send()
+}, (error, req, res, next) => {
+  res.status(400).send({ error: error.message })
+})
+
+// @route DELETE /me/avatar
+// @desc DELETE users own avatar
+// @access Private
+
+router.delete('/me/avatar', auth, async (req, res) => {
+  req.user.avatar = undefined
+  await req.user.save()
+  res.send()
+})
+
+// @route GET /users/:id/avatar
+// @desc GET single user avatar
+// @access Public
+
+router.get('/:id/avatar', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+    if (!user || !user.avatar) {
+      throw new Error()
+    }
+    res.set('Content-Type', 'image/png')
+    res.send(user.avatar)
+  } catch (e) {
+    res.status(404).send()
   }
 })
 
 module.exports = router
-
