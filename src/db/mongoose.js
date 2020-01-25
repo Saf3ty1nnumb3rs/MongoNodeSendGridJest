@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-process.env["NODE_CONFIG_DIR"] = __dirname
+process.env['NODE_CONFIG_DIR'] = __dirname
 
 const connectDB = async () => {
   try {
@@ -8,13 +8,13 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useCreateIndex: true,
       useFindAndModify: false
-    });
+    })
 
     console.log('MongoDB Connected...')
   } catch (err) {
-    console.log(err.message);
+    console.log(err.message)
     // Exit process with failure
-    process.exit(1);
+    process.exit(1)
   }
 }
 
